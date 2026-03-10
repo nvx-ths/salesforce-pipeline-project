@@ -1,0 +1,109 @@
+name: Salesforce CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  SF_USERNAME: ${{ secrets.SF_USERNAME }}
+  SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+  SF_SECURITY_TOKEN: ${{ secrets.SF_SECURITY_TOKEN }}
+  SF_CLIENT_ID: ${{ secrets.SF_CLIENT_ID }}
+  SF_CLIENT_SECRET: ${{ secrets.SF_CLIENT_SECRET }}
+  SF_ORG_ALIAS: ci-org
+
+jobs:
+  validate:
+    name: Validate Deployment (PR)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf --version
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+      - name: Authenticate to Salesforce
+        run: |
+          RESPONSE=$(curl -s https://login.salesforce.com/services/oauth2/token \
+            -d "grant_type=password" \
+            -d "client_id=${SF_CLIENT_ID}" \
+            -d "client_secret=${SF_CLIENT_SECRET}" \
+            -d "username=${SF_USERNAME}" \
+            -d "password=${SF_PASSWORD}${SF_SECURITY_TOKEN}")
+          ACCESS_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
+          INSTANCE_URL=$(echo "$RESPONSE" | jq -r '.instance_url')
+          if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
+            echo "Auth failed: $RESPONSE"
+            exit 1
+          fi
+          sf org login access-token \
+            --alias "${SF_ORG_ALIAS}" \
+            --instance-url "$INSTANCE_URL" \
+            --access-token "$ACCESS_TOKEN" \
+            --set-default
+      - name: Validate deployment
+        run: |
+          sf project deploy validate \
+            --target-org "${SF_ORG_ALIAS}" \
+            --test-level RunLocalTests \
+            --wait 30
+
+  deploy:
+    name: Deploy to Developer Org (main)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli
+          sf --version
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+      - name: Authenticate to Salesforce
+        run: |
+          RESPONSE=$(curl -s https://login.salesforce.com/services/oauth2/token \
+            -d "grant_type=password" \
+            -d "client_id=${SF_CLIENT_ID}" \
+            -d "client_secret=${SF_CLIENT_SECRET}" \
+            -d "username=${SF_USERNAME}" \
+            -d "password=${SF_PASSWORD}${SF_SECURITY_TOKEN}")
+          ACCESS_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
+          INSTANCE_URL=$(echo "$RESPONSE" | jq -r '.instance_url')
+          if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
+            echo "Auth failed: $RESPONSE"
+            exit 1
+          fi
+          sf org login access-token \
+            --alias "${SF_ORG_ALIAS}" \
+            --instance-url "$INSTANCE_URL" \
+            --access-token "$ACCESS_TOKEN" \
+            --set-default
+      - name: Deploy to org
+        run: |
+          sf project deploy start \
+            --target-org "${SF_ORG_ALIAS}" \
+            --test-level RunLocalTests \
+            --wait 30 \
+            --ignore-conflicts
