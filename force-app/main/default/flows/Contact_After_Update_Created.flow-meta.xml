@@ -11,7 +11,8 @@
         <locationX>50</locationX>
         <locationY>0</locationY>
         <object>Contact</object>
-        <recordTriggerType>CreateOrUpdate</recordTriggerType>
+        <!-- Trigger when a Contact is created OR updated -->
+        <recordTriggerType>createdOrUpdated</recordTriggerType>
         <triggerType>RecordBeforeSave</triggerType>
         <connector>
             <targetReference>Assign_LeadSource_Web</targetReference>
