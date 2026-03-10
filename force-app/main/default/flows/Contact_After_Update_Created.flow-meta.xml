@@ -21,11 +21,8 @@
             <stringValue>LightningFlowBuilder</stringValue>
         </value>
     </processMetadataValues>
-    <!-- Record-triggered autolaunched flow that runs after save on Contact create/update -->
+    <!-- Record-triggered autolaunched flow that runs before save on Contact create/update -->
     <processType>AutoLaunchedFlow</processType>
-    <triggerType>RecordAfterSave</triggerType>
-    <!-- First element the flow runs after Start -->
-    <startElementReference>Assign_LeadSource_Web</startElementReference>
     <!-- Assignment: set LeadSource to 'Web' on the triggering Contact record -->
     <assignments>
         <name>Assign_LeadSource_Web</name>
@@ -43,8 +40,16 @@
     <start>
         <locationX>50</locationX>
         <locationY>0</locationY>
+        <!-- Connect Start to the assignment element -->
+        <connector>
+            <targetReference>Assign_LeadSource_Web</targetReference>
+        </connector>
         <!-- Triggered when a Contact record is created or updated -->
         <object>Contact</object>
+        <!-- Run when a record is created or updated -->
+        <recordTriggerType>CreateOrUpdate</recordTriggerType>
+        <!-- Before-save record-triggered flow (fast field update) -->
+        <triggerType>RecordBeforeSave</triggerType>
     </start>
     <status>Active</status>
 </Flow>
