@@ -1,52 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>62.0</apiVersion>
-    <environments>Default</environments>
-    <label>Contact_After_Update_Created</label>
+    <label>Contact After Update Created</label>
     <processMetadataValues>
         <name>BuilderType</name>
         <value>
             <stringValue>LightningFlowBuilder</stringValue>
         </value>
     </processMetadataValues>
-    <processMetadataValues>
-        <name>CanvasMode</name>
-        <value>
-            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
-        </value>
-    </processMetadataValues>
-    <processMetadataValues>
-        <name>OriginBuilderType</name>
-        <value>
-            <stringValue>LightningFlowBuilder</stringValue>
-        </value>
-    </processMetadataValues>
-    <!-- Record-triggered autolaunched flow that runs before save on Contact create/update -->
     <processType>AutoLaunchedFlow</processType>
-    <triggerType>RecordBeforeSave</triggerType>
-    <!-- Assignment: set LeadSource to 'Web' on the triggering Contact record -->
-    <assignments>
-        <name>Assign_LeadSource_Web</name>
-        <label>Set Lead Source to Web</label>
-        <locationX>176</locationX>
-        <locationY>80</locationY>
-        <assignmentItems>
-            <assignToReference>$Record.LeadSource</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <stringValue>Web</stringValue>
-            </value>
-        </assignmentItems>
-    </assignments>
     <start>
         <locationX>50</locationX>
         <locationY>0</locationY>
-        <connector>
-            <targetReference>Assign_LeadSource_Web</targetReference>
-        </connector>
-        <!-- Triggered when a Contact record is created or updated -->
         <object>Contact</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
     </start>
     <status>Active</status>
 </Flow>
-
